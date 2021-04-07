@@ -1,0 +1,31 @@
+version: '2.1'
+services:
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    container_name: zigbee2mqtt 
+    restart: always
+    privileged: true
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./configuration.yaml:/app/data/configuration.yaml
+      - /run/udev:/run/udev:ro
+    devices:
+      - "/dev/ttyACM0"
+  mqtt:
+    image: eclipse-mosquitto
+    ports:
+       - 1883:1883
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+  zigbee2mqttAssistant:
+    image: carldebilly/zigbee2mqttassistant
+    restart: unless-stopped
+    depends_on:
+      zigbee2mqtt:
+        condition: service_started
+    environment:
+      - Z2MA_SETTINGS__MQTTSERVER=mqtt
+      - TZ=Europe/Berlin
+    ports:
+      - 8880:80
